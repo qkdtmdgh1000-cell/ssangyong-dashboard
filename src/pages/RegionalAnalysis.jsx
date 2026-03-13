@@ -23,7 +23,7 @@ export default function RegionalAnalysis() {
   const [mode, setMode] = useState('unsold');
   const [selectedRegion, setSelectedRegion] = useState(null);
 
-  const { data: topoData } = useData('/data/korea_topo.json');
+  const { data: topoData } = useData(`${import.meta.env.BASE_URL}data/korea_topo.json`);
   const { data, loading, error } = useMultiData({
     unsold: DATA_FILES.unsoldHousing,
     permits: DATA_FILES.buildingPermits,

@@ -1,10 +1,12 @@
+const BASE = import.meta.env.BASE_URL;
+
 export const DATA_FILES = {
-  constructionOrders: '/data/construction_orders.json',
-  unsoldHousing: '/data/unsold_housing.json',
-  constructionEmployment: '/data/construction_employment.json',
-  buildingPermits: '/data/building_permits.json',
-  constructionOrdersAlt: '/data/construction_orders_alt.json',
-  constructionInvestment: '/data/construction_investment.json',
+  constructionOrders: `${BASE}data/construction_orders.json`,
+  unsoldHousing: `${BASE}data/unsold_housing.json`,
+  constructionEmployment: `${BASE}data/construction_employment.json`,
+  buildingPermits: `${BASE}data/building_permits.json`,
+  constructionOrdersAlt: `${BASE}data/construction_orders_alt.json`,
+  constructionInvestment: `${BASE}data/construction_investment.json`,
 };
 
 export const METROPOLITAN = ['서울특별시', '인천광역시', '경기도'];
