@@ -9,6 +9,7 @@ import ChartCard from '../components/common/ChartCard';
 import { Target, Clock, Lightbulb, ArrowUpRight } from 'lucide-react';
 
 // Fan Chart용 데이터 빌드
+// fanBase = pessimistic, fanRange = optimistic - pessimistic (스택으로 음영 영역 생성)
 function buildFanData() {
   const actualYears = Object.keys(SCENARIOS.actual).map(Number).sort();
   const forecastYears = Object.keys(SCENARIOS.base).map(Number).sort();
@@ -16,32 +17,30 @@ function buildFanData() {
   const actualData = actualYears.map(year => ({
     year,
     actual: SCENARIOS.actual[year],
-    isActual: true,
   }));
 
-  // 실제값 마지막 연도를 전망의 기준점으로 연결
   const lastActual = actualYears.at(-1);
   const lastActualVal = SCENARIOS.actual[lastActual];
 
-  const forecastData = forecastYears.map(year => ({
-    year,
-    base: SCENARIOS.base[year],
-    optimistic: SCENARIOS.optimistic[year],
-    pessimistic: SCENARIOS.pessimistic[year],
-    // 낙관-비관 범위 (Area 용)
-    range: [SCENARIOS.pessimistic[year], SCENARIOS.optimistic[year]],
-    isActual: false,
-  }));
-
-  // 실제 → 전망 연결 브리지
+  // 브리지 (실적→전망 연결점)
   const bridge = {
     year: lastActual,
     actual: lastActualVal,
     base: lastActualVal,
     optimistic: lastActualVal,
     pessimistic: lastActualVal,
-    range: [lastActualVal, lastActualVal],
+    fanBase: lastActualVal,
+    fanRange: 0,
   };
+
+  const forecastData = forecastYears.map(year => ({
+    year,
+    base: SCENARIOS.base[year],
+    optimistic: SCENARIOS.optimistic[year],
+    pessimistic: SCENARIOS.pessimistic[year],
+    fanBase: SCENARIOS.pessimistic[year],
+    fanRange: SCENARIOS.optimistic[year] - SCENARIOS.pessimistic[year],
+  }));
 
   return [...actualData, bridge, ...forecastData];
 }
@@ -88,16 +87,24 @@ const COLOR_MAP = {
   purple: { bg: 'bg-purple-50 dark:bg-purple-950', border: 'border-purple-200 dark:border-purple-800', badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' },
 };
 
+const TOOLTIP_ORDER = ['낙관', '기본', '비관', '실적'];
+const TOOLTIP_COLORS = { '낙관': COLORS.positive, '기본': COLORS.primary, '비관': COLORS.negative, '실적': COLORS.chart.public };
+
 function FanTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
+  // 표시할 항목 필터 + 순서 정렬
+  const items = payload
+    .filter(p => p.value != null && TOOLTIP_ORDER.includes(p.name))
+    .sort((a, b) => TOOLTIP_ORDER.indexOf(a.name) - TOOLTIP_ORDER.indexOf(b.name));
+  if (!items.length) return null;
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs shadow-xl">
-      <p className="font-semibold mb-1">{label}년</p>
-      {payload.map(p => p.value != null && (
-        <div key={p.name} className="flex items-center gap-2">
-          <span style={{ color: p.color }}>●</span>
-          <span className="text-gray-700">{p.name}:</span>
-          <span className="font-medium">{Array.isArray(p.value) ? `${p.value[0]}~${p.value[1]}조` : `${p.value}조`}</span>
+      <p className="font-bold text-gray-900 mb-1.5">{label}년</p>
+      {items.map(p => (
+        <div key={p.name} className="flex items-center gap-2 py-0.5">
+          <span style={{ color: TOOLTIP_COLORS[p.name] || p.color }}>●</span>
+          <span className="text-gray-700 font-medium">{p.name}:</span>
+          <span className="font-bold text-gray-900">{p.value}조</span>
         </div>
       ))}
     </div>
@@ -140,8 +147,8 @@ export default function OutlookStrategy() {
           <ComposedChart data={fanData} margin={{ top: 10, right: 30, bottom: 10, left: 10 }}>
             <defs>
               <linearGradient id="fanGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.15} />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.08} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -153,28 +160,54 @@ export default function OutlookStrategy() {
               width={48}
             />
             <Tooltip content={<FanTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Legend
+              wrapperStyle={{ fontSize: 12 }}
+              payload={[
+                { value: '실적', type: 'line', color: COLORS.chart.public },
+                { value: '낙관', type: 'line', color: COLORS.positive },
+                { value: '기본', type: 'line', color: COLORS.primary },
+                { value: '비관', type: 'line', color: COLORS.negative },
+              ]}
+            />
 
-            {/* 낙관-비관 범위 Area */}
+            {/* 낙관-비관 범위 음영: 투명 base(비관까지) + 색상 range(비관~낙관) */}
             <Area
+              dataKey="fanBase"
+              stackId="fan"
+              fill="transparent"
+              stroke="none"
+              legendType="none"
+              tooltipType="none"
+            />
+            <Area
+              dataKey="fanRange"
+              stackId="fan"
+              fill="url(#fanGrad)"
+              stroke="none"
+              legendType="none"
+              tooltipType="none"
+            />
+
+            {/* 낙관 라인 */}
+            <Line
               dataKey="optimistic"
               name="낙관"
-              fill="url(#fanGrad)"
               stroke={COLORS.positive}
               strokeWidth={1.5}
               strokeDasharray="5 3"
-              dot={false}
-              fillOpacity={1}
+              dot={{ r: 3, fill: COLORS.positive }}
+              legendType="none"
             />
-            <Area
+
+            {/* 비관 라인 */}
+            <Line
               dataKey="pessimistic"
               name="비관"
-              fill="#ffffff"
               stroke={COLORS.negative}
               strokeWidth={1.5}
               strokeDasharray="5 3"
-              dot={false}
-              fillOpacity={1}
+              dot={{ r: 3, fill: COLORS.negative }}
+              legendType="none"
             />
 
             {/* 기본 시나리오 */}
@@ -185,6 +218,7 @@ export default function OutlookStrategy() {
               strokeWidth={2.5}
               strokeDasharray="6 3"
               dot={{ r: 4, fill: COLORS.primary }}
+              legendType="none"
             />
 
             {/* 실적 */}
@@ -194,6 +228,7 @@ export default function OutlookStrategy() {
               stroke={COLORS.chart.public}
               strokeWidth={3}
               dot={{ r: 4, fill: COLORS.chart.public }}
+              legendType="none"
             />
 
             {/* 실적/전망 구분선 */}
