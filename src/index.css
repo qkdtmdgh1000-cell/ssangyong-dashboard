@@ -1,0 +1,52 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── 기본 설정 ───────────────────────────────── */
+body {
+  font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 다크모드 전환 애니메이션 */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+/* 애니메이션이 필요 없는 요소는 제외 */
+svg *, canvas, .recharts-surface {
+  transition: none !important;
+}
+
+/* ── 스크롤바 ────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+
+/* ── 유틸 ───────────────────────────────────── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* recharts 다크모드 텍스트 */
+.dark .recharts-cartesian-axis-tick text,
+.dark .recharts-legend-item-text {
+  fill: #9ca3af !important;
+}
+.dark .recharts-cartesian-grid line {
+  stroke: #374151 !important;
+}
