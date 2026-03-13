@@ -1,0 +1,1 @@
+function e(e,t){return!t||t===0?null:(e-t)/Math.abs(t)*100}export{e as t};
