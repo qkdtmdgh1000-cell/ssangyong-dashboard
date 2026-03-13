@@ -34,7 +34,7 @@ function RankTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   const sorted = [...payload].sort((a, b) => a.value - b.value);
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-xs shadow-xl">
+    <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs shadow-xl">
       <p className="font-semibold mb-1">{label}년</p>
       {sorted.map(p => (
         <div key={p.name} className="flex items-center gap-2">

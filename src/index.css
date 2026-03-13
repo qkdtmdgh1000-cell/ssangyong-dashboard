@@ -50,3 +50,24 @@ svg *, canvas, .recharts-surface {
 .dark .recharts-cartesian-grid line {
   stroke: #374151 !important;
 }
+
+/* recharts 툴팁: 항상 밝은 배경 + 검은 글씨 */
+.recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+.recharts-tooltip-label {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+.recharts-tooltip-item {
+  color: #374151 !important;
+}
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-separator,
+.recharts-tooltip-item-value,
+.recharts-tooltip-item-unit {
+  color: #374151 !important;
+}

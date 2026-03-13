@@ -18,12 +18,12 @@ import { Building2, TrendingUp, Home, HardHat, Award } from 'lucide-react';
 function OrderTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-xs shadow-lg">
-      <p className="font-semibold mb-1 text-gray-700 dark:text-gray-200">{formatPeriod(label)}</p>
+    <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs shadow-lg">
+      <p className="font-semibold mb-1 text-gray-900">{formatPeriod(label)}</p>
       {payload.map(p => (
         <div key={p.name} className="flex items-center gap-2">
           <span style={{ color: p.color }}>●</span>
-          <span className="text-gray-600 dark:text-gray-300">{p.name}:</span>
+          <span className="text-gray-700">{p.name}:</span>
           <span className="font-medium">{formatBillion(p.value)}</span>
         </div>
       ))}
@@ -34,12 +34,12 @@ function OrderTooltip({ active, payload, label }) {
 function InvestTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-xs shadow-lg">
-      <p className="font-semibold mb-1 text-gray-700 dark:text-gray-200">{formatPeriod(label)}</p>
+    <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs shadow-lg">
+      <p className="font-semibold mb-1 text-gray-900">{formatPeriod(label)}</p>
       {payload.map(p => (
         <div key={p.name} className="flex items-center gap-2">
           <span style={{ color: p.color }}>●</span>
-          <span className="text-gray-600 dark:text-gray-300">{p.name}:</span>
+          <span className="text-gray-700">{p.name}:</span>
           <span className="font-medium">
             {p.name === 'YoY%' ? `${p.value?.toFixed(1)}%` : formatBillion(p.value)}
           </span>

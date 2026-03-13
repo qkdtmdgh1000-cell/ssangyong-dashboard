@@ -91,12 +91,12 @@ const COLOR_MAP = {
 function FanTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-xs shadow-xl">
+    <div className="bg-white border border-gray-200 rounded-lg p-3 text-xs shadow-xl">
       <p className="font-semibold mb-1">{label}년</p>
       {payload.map(p => p.value != null && (
         <div key={p.name} className="flex items-center gap-2">
           <span style={{ color: p.color }}>●</span>
-          <span className="text-gray-600 dark:text-gray-300">{p.name}:</span>
+          <span className="text-gray-700">{p.name}:</span>
           <span className="font-medium">{Array.isArray(p.value) ? `${p.value[0]}~${p.value[1]}조` : `${p.value}조`}</span>
         </div>
       ))}
