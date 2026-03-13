@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 // 예: base: '/ssangyong-dashboard/'
 export default defineConfig({
   plugins: [react()],
-  base: process.env.VITE_BASE_URL || '/',
+  base: '/ssangyong-dashboard/',
   build: {
     chunkSizeWarningLimit: 800,
     rollupOptions: {
