@@ -14,53 +14,34 @@ const BUDGET_KEYS = [
   { key: 'other', label: '기타', color: '#a3a3a3' },
 ];
 
-// 워터폴 차트용 데이터 변환
-function buildWaterfall(budgetData) {
-  // 2025→2026 분야별 증감 + 전체 합계
+// 워터폴 차트용 데이터 (분야별 증감)
+function buildChangeData(budgetData) {
   const base = budgetData.find(d => d.year === 2025);
   const cur = budgetData.find(d => d.year === 2026);
   if (!base || !cur) return [];
 
-  let runningTotal = base.total;
-  const items = [];
-
-  BUDGET_KEYS.forEach(({ key, label, color }) => {
-    const diff = (cur[key] - base[key]);
-    items.push({
+  const items = BUDGET_KEYS.map(({ key, label, color }) => {
+    const diff = Math.round((cur[key] - base[key]) * 10) / 10;
+    return {
       name: label,
-      base: Math.round(Math.min(runningTotal, runningTotal + diff) * 10) / 10,
-      value: Math.round(Math.abs(diff) * 10) / 10,
-      diff: Math.round(diff * 10) / 10,
-      isPositive: diff >= 0,
+      '증감': diff,
+      '2025': base[key],
+      '2026': cur[key],
       color,
-    });
-    runningTotal += diff;
+    };
   });
 
-  // 시작 / 끝 항목
-  return [
-    { name: '2025 합계', base: 0, value: base.total, isTotal: true, color: COLORS.primary },
-    ...items,
-    { name: '2026 합계', base: 0, value: cur.total, isTotal: true, color: COLORS.accent },
-  ];
-}
+  // 합계 항목 추가
+  items.push({
+    name: '합계',
+    '증감': Math.round((cur.total - base.total) * 10) / 10,
+    '2025': base.total,
+    '2026': cur.total,
+    color: COLORS.accent,
+    isTotal: true,
+  });
 
-// 워터폴 커스텀 툴팁
-function WaterfallTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  const d = payload[0]?.payload;
-  return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3 text-xs shadow-xl">
-      <p className="font-semibold">{label}</p>
-      {d.isTotal ? (
-        <p className="text-gray-600 dark:text-gray-300 mt-1">총 예산: <strong>{d.value}조원</strong></p>
-      ) : (
-        <p className={`mt-1 font-medium ${d.isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-          {d.isPositive ? '+' : ''}{d.diff}조원
-        </p>
-      )}
-    </div>
-  );
+  return items;
 }
 
 const IMPACT_STYLE = {
@@ -70,7 +51,7 @@ const IMPACT_STYLE = {
 };
 
 export default function PolicyTracker() {
-  const waterfallData = buildWaterfall(SOC_BUDGET);
+  const changeData = buildChangeData(SOC_BUDGET);
 
   return (
     <div className="space-y-6">
@@ -121,35 +102,65 @@ export default function PolicyTracker() {
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* 2025→2026 워터폴 차트 */}
-        <ChartCard title="2025→2026 SOC 예산 변동" subtitle="분야별 증감 워터폴 차트 (조원)">
+        {/* 2025→2026 분야별 변동 */}
+        <ChartCard title="2025→2026 분야별 예산 증감" subtitle="전년比 변동폭 (조원) · 합계 +2.0조">
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={waterfallData} margin={{ top: 10, right: 15, bottom: 5, left: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis tickFormatter={v => `${v}조`} tick={{ fontSize: 10 }} width={40} domain={[0, 32]} />
-              <Tooltip content={<WaterfallTooltip />} />
-              {/* 투명 베이스 바 (워터폴 효과) */}
-              <Bar dataKey="base" stackId="wf" fill="transparent" />
-              <Bar dataKey="value" stackId="wf" radius={[3, 3, 0, 0]}>
-                {waterfallData.map((entry, i) => (
+            <BarChart data={changeData} layout="vertical" margin={{ top: 10, right: 40, bottom: 5, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+              <XAxis
+                type="number"
+                tickFormatter={v => `+${v}조`}
+                tick={{ fontSize: 10 }}
+                domain={[0, 2.2]}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                tick={({ x, y, payload }) => {
+                  const item = changeData.find(d => d.name === payload.value);
+                  return (
+                    <text
+                      x={x - 4} y={y + 4}
+                      textAnchor="end"
+                      fontSize={11}
+                      fill={item?.isTotal ? COLORS.accent : '#9ca3af'}
+                      fontWeight={item?.isTotal ? 700 : 400}
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
+                width={50}
+              />
+              <Tooltip
+                formatter={(v, name, { payload }) => [
+                  `+${v}조원 (${payload['2025']}→${payload['2026']}조)`,
+                  payload.name,
+                ]}
+                cursor={{ fill: 'transparent' }}
+              />
+              <Bar dataKey="증감" radius={[0, 4, 4, 0]} barSize={24}>
+                <LabelList
+                  dataKey="증감"
+                  position="right"
+                  formatter={v => `+${v}조`}
+                  style={{ fontSize: 11, fontWeight: 600, fill: '#10b981' }}
+                />
+                {changeData.map((entry, i) => (
                   <Cell
                     key={i}
-                    fill={
-                      entry.isTotal ? entry.color
-                      : entry.isPositive ? COLORS.positive
-                      : COLORS.negative
-                    }
-                    opacity={entry.isTotal ? 0.85 : 0.9}
+                    fill={entry.isTotal ? COLORS.accent : entry.color}
+                    opacity={entry.isTotal ? 1 : 0.85}
                   />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <div className="flex gap-4 mt-2 text-xs justify-center">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block" style={{ background: COLORS.primary }} />합계</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block" style={{ background: COLORS.positive }} />증가</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded inline-block" style={{ background: COLORS.negative }} />감소</span>
+          {/* 하단 요약 */}
+          <div className="mt-3 flex items-center justify-center gap-6 text-xs text-gray-500 dark:text-gray-400">
+            <span>2025: <strong className="text-gray-700 dark:text-gray-200">25.5조</strong></span>
+            <span className="text-emerald-600 font-bold text-sm">→ +2.0조 →</span>
+            <span>2026: <strong className="text-accent">27.5조</strong></span>
           </div>
         </ChartCard>
       </div>
